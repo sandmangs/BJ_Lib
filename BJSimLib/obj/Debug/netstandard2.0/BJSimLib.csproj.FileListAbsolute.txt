@@ -1,0 +1,9 @@
+C:\Users\gsand\Documents\Source Code\BJSimLib\BJSimLib\bin\Debug\netstandard2.0\BJSimLib.deps.json
+C:\Users\gsand\Documents\Source Code\BJSimLib\BJSimLib\bin\Debug\netstandard2.0\BJSimLib.dll
+C:\Users\gsand\Documents\Source Code\BJSimLib\BJSimLib\bin\Debug\netstandard2.0\BJSimLib.pdb
+C:\Users\gsand\Documents\Source Code\BJSimLib\BJSimLib\obj\Debug\netstandard2.0\BJSimLib.csprojAssemblyReference.cache
+C:\Users\gsand\Documents\Source Code\BJSimLib\BJSimLib\obj\Debug\netstandard2.0\BJSimLib.csproj.CoreCompileInputs.cache
+C:\Users\gsand\Documents\Source Code\BJSimLib\BJSimLib\obj\Debug\netstandard2.0\BJSimLib.AssemblyInfoInputs.cache
+C:\Users\gsand\Documents\Source Code\BJSimLib\BJSimLib\obj\Debug\netstandard2.0\BJSimLib.AssemblyInfo.cs
+C:\Users\gsand\Documents\Source Code\BJSimLib\BJSimLib\obj\Debug\netstandard2.0\BJSimLib.dll
+C:\Users\gsand\Documents\Source Code\BJSimLib\BJSimLib\obj\Debug\netstandard2.0\BJSimLib.pdb
