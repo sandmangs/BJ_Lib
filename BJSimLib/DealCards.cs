@@ -16,14 +16,14 @@ namespace BJSimLib
 		List<PlayerModel> players = new List<PlayerModel>();
 		List<PlayerModel> gamePlayers = new List<PlayerModel>();
 
-		public const int dealerCardPosition = 2;
-		public const int playerCardPosition = 15;
-		public const int player2CardPosition = 31;
-		public const int playerMessagePosition = 27;
-		public const int player2MessagePosition = 43;
+		public const int dealerCardPosition = 4;
+		public const int playerCardPosition = 17;
+		public const int player2CardPosition = 33;
+		public const int playerMessagePosition = 29;
+		public const int player2MessagePosition = 45;
 		public const int playerBetPosition = 35;
-		public const int headerBetPosition = 120;
-		public const int headerBankPosition = 80;
+		public const int headerBetPosition = 80;
+		public const int headerBankPosition = 40;
 
 		int x = 0;
 		int y = 0;
@@ -88,6 +88,12 @@ namespace BJSimLib
 			bool acceptEntry = false;
 
 			playGame = plyGame;
+			foreach (PlayerModel p in players)
+			{
+				initialBankTotal = p.bankroll;
+				p.handStats.Add("H#,W/L,Dlr,Ply,Ply2,DlrC,PlyrC,Plyr2C,pW,PL,pPsh,p2W,p2L,p2Push,OffDD,AccDD,DecDD,PWDD,PLDD,PshDD,P2WDD,P2LDD,Psh2DD,OffSpl,AccSpl,DecSpl,SplPW,SplPL,SplPush,SplP2W,SplP2L,Spl2Psh,PBst,P2Bst,DBst,PNBJ,DNBJ,PshNBJ,OffIns,DecIns,BIns,WInsBet,LInsBet,DInsLs,F2T,D1C");
+				p.startingHandTotals.Add("Start Hand,Hands,W/L,Ws,Ls,Ps,Hit Ws,Hit Ls,Hit Ps,Hit Busts,Stand Ws,Stand Ls,Stand Ps");
+			}
 			Console.BackgroundColor = ConsoleColor.White;
 			Console.Clear();
 			Console.BackgroundColor = ConsoleColor.Black;
@@ -159,18 +165,12 @@ namespace BJSimLib
 
 		public void GameDeal()
 		{
-			foreach (PlayerModel p in players)
-			{
-				initialBankTotal = p.bankroll;
-				p.handStats.Add("H#,W/L,Dlr,Ply,Ply2,DlrC,PlyrC,Plyr2C,pW,PL,pPsh,p2W,p2L,p2Push,OffDD,AccDD,DecDD,PWDD,PLDD,PshDD,P2WDD,P2LDD,Psh2DD,OffSpl,AccSpl,DecSpl,SplPW,SplPL,SplPush,SplP2W,SplP2L,Spl2Psh,PBst,P2Bst,DBst,PNBJ,DNBJ,PshNBJ,OffIns,DecIns,BIns,WInsBet,LInsBet,DInsLs,F2T,D1C");
-				p.startingHandTotals.Add("Start Hand,Hands,W/L,Ws,Ls,Ps,Hit Ws,Hit Ls,Hit Ps,Hit Busts,Stand Ws,Stand Ls,Stand Ps");
-			}
-			InitializeConsoleDisplay();
 			if (nextCardIndex > cardMark)
 			{
 				SetUpDeck(decks);
 			}
 			ResetGame();
+			Console.Clear();
 			foreach (PlayerModel p in players)
 			{
 				SetUpBankroll(p);
@@ -181,6 +181,64 @@ namespace BJSimLib
 			}
 			DealerTurn();
 			GetStats();	
+		}
+
+		public void Deal(int plyrBankroll, int plyrBet, int rnTimes)
+		{
+			players.Add(player1);
+			players.Add(player2);
+			players.Add(player3);
+			players.Add(player4);
+			runTimes = rnTimes;
+			InitializeConsoleDisplay();
+			foreach (PlayerModel p in players)
+			{
+				p.bankroll = plyrBankroll;
+				initialBankTotal = p.bankroll;
+				betAmount = plyrBet;
+				p.handStats.Add("H#,W/L,Dlr,Ply,Ply2,DlrC,PlyrC,Plyr2C,pW,PL,pPsh,p2W,p2L,p2Push,OffDD,AccDD,DecDD,PWDD,PLDD,PshDD,P2WDD,P2LDD,Psh2DD,OffSpl,AccSpl,DecSpl,SplPW,SplPL,SplPush,SplP2W,SplP2L,Spl2Psh,PBst,P2Bst,DBst,PNBJ,DNBJ,PshNBJ,OffIns,DecIns,BIns,WInsBet,LInsBet,DInsLs,F2T,D1C");
+				p.startingHandTotals.Add("Start Hand,Hands,W/L,Ws,Ls,Ps,Hit Ws,Hit Ls,Hit Ps,Hit Busts,Stand Ws,Stand Ls,Stand Ps");
+			}
+			for (int i = 0; i < runTimes; i++)
+			{
+				if (nextCardIndex > cardMark)
+				{
+					SetUpDeck(decks);
+				}
+				ResetGame();
+				foreach (PlayerModel p in players)
+				{
+					SetUpBankroll(p);
+				}
+				InitialDeal();
+				foreach (PlayerModel p in players)
+				{
+					if (offerInsurance && (int)dealer.hand[0].MyValue == 11)
+					{
+						GetInsurance(p);
+					}
+					if ((int)p.hand[0].MyFaceValue == (int)p.hand[1].MyFaceValue && allowSplitFlag && dealer.total != 21)
+					{
+						p.totalSplitOffered++;
+						p.handSplitOffered = 1;
+						AllowSplit(p);
+					}
+
+					if ((p.total == 9 || p.total == 10 || p.total == 11) && allowDoubleDown && dealer.total != 21)
+					{
+						p.totalDoubleDownOffered++;
+						p.handDoubleDownOffered = 1;
+						AllowDD(p, p.total);
+					}
+					PlayCards(p);
+				}
+				DealerTurn();
+				DisplayBank();
+				GetStats();
+			}
+			DisplayStats();
+			WriteToFile();
+			Console.ReadLine();
 		}
 
 		private static void ClearCurrentConsoleLine()
@@ -194,7 +252,7 @@ namespace BJSimLib
 		private void GamePlayCards(PlayerModel p)
 		{
 			//char playerMove = ' '; // keypress from player
-			if (!p.gameOver)
+			if (!p.turnOver)
 			{
 				Console.ForegroundColor = ConsoleColor.Black;
 				Console.WriteLine("Play Options");
@@ -215,7 +273,7 @@ namespace BJSimLib
 				}
 				Console.WriteLine();
 			}
-			while (!p.gameOver)
+			while (!p.turnOver)
 			{
 				ConsoleKeyInfo playerMove = Console.ReadKey(true);
 				if ((playerMove.KeyChar == 'I' || playerMove.KeyChar == 'i') && (int)dealer.hand[0].MyValue == 11)
@@ -240,6 +298,7 @@ namespace BJSimLib
 					Console.SetCursorPosition(playerBetPosition, playerCardPosition - 1);
 					Console.Write("Bet Won: ${0}", p.betResult);
 					Console.Beep();
+					p.turnOver = true;
 					p.gameOver = true;
 					ShowDealerCard();
 					HandTotal(p);
@@ -262,7 +321,7 @@ namespace BJSimLib
 					DoubleDown(p);
 					if (!p.gameOver && !p.isSplit || p.secondHand)
 					{
-						DealerTurn();
+						p.turnOver = true;
 					}
 					else if (p.isSplit && !p.secondHand)
 					{
@@ -280,7 +339,7 @@ namespace BJSimLib
 						ClearCurrentConsoleLine();
 						Console.SetCursorPosition(x, y + 2);
 						ClearCurrentConsoleLine();
-						DealerTurn();
+						p.turnOver = true;
 					}
 					else if (p.isSplit && !p.secondHand)
 					{
@@ -312,7 +371,7 @@ namespace BJSimLib
 					Console.ForegroundColor = ConsoleColor.Red;
 					Console.WriteLine("Invalid key pressed!");
 				}
-				if (!p.gameOver)
+				if (!p.turnOver)
 				{
 					if (!p.secondHand)
 					{
@@ -362,10 +421,6 @@ namespace BJSimLib
 						Console.WriteLine();
 						ClearCurrentConsoleLine();
 					}
-				}
-				else
-				{
-					GameBankUpdate(p);
 				}
 			}
 		}
@@ -427,14 +482,18 @@ namespace BJSimLib
 				Console.SetCursorPosition(0, y);
 				Console.ForegroundColor = ConsoleColor.DarkGreen;
 				Console.WriteLine("BLACKJACK!!!  Player WINS!!!!");
+				p.betResult = p.bet * 1.5;
 				Console.SetCursorPosition(playerBetPosition, playerCardPosition - 1);
 				Console.Write("Bet Won: ${0}", p.betResult);
+				p.gameOver = true;
 				for (int i = 0; i < 3; i++)
 				{
 					Console.Beep();
 				}
 				GameBankUpdate(p);
 				ShowDealerCard();
+				HandTotal(p);
+				DealerHandTotal();
 				Console.SetCursorPosition(0, y + 2);
 			}
 			else if (p.total == 21 && dealer.total == 21)  // Player pushes with natural BJ if dealer also had natural BJ
@@ -442,12 +501,16 @@ namespace BJSimLib
 				Console.SetCursorPosition(0, y);
 				Console.ForegroundColor = ConsoleColor.DarkGreen;
 				Console.WriteLine("Both the Player and Dealer have BLACKJACK!!!  Tie game, Player takes back his chips!!!!");
+				p.betResult = 0;
 				Console.ForegroundColor = ConsoleColor.DarkMagenta;
 				Console.SetCursorPosition(playerBetPosition, playerCardPosition - 1);
 				Console.Write("Bet Won: ${0}", p.betResult);
+				p.gameOver = true;
 				Console.Beep();
 				GameBankUpdate(p);
 				ShowDealerCard();
+				HandTotal(p);
+				DealerHandTotal();
 				Console.SetCursorPosition(0, y + 2);
 			}
 		}
@@ -1057,64 +1120,6 @@ namespace BJSimLib
 			{
 				player.getInsurance = true;
 			}
-		}
-
-		public void Deal(int plyrBankroll, int plyrBet, int rnTimes)
-		{
-			players.Add(player1);
-			players.Add(player2);
-			players.Add(player3);
-			players.Add(player4);
-			runTimes = rnTimes;
-			InitializeConsoleDisplay();
-			foreach (PlayerModel p in players)
-			{
-				p.bankroll = plyrBankroll;
-				initialBankTotal = p.bankroll;
-				betAmount = plyrBet;
-				p.handStats.Add("H#,W/L,Dlr,Ply,Ply2,DlrC,PlyrC,Plyr2C,pW,PL,pPsh,p2W,p2L,p2Push,OffDD,AccDD,DecDD,PWDD,PLDD,PshDD,P2WDD,P2LDD,Psh2DD,OffSpl,AccSpl,DecSpl,SplPW,SplPL,SplPush,SplP2W,SplP2L,Spl2Psh,PBst,P2Bst,DBst,PNBJ,DNBJ,PshNBJ,OffIns,DecIns,BIns,WInsBet,LInsBet,DInsLs,F2T,D1C");
-				p.startingHandTotals.Add("Start Hand,Hands,W/L,Ws,Ls,Ps,Hit Ws,Hit Ls,Hit Ps,Hit Busts,Stand Ws,Stand Ls,Stand Ps"); 
-			}
-			for (int i = 0; i < runTimes; i++)
-			{
-				if (nextCardIndex > cardMark)
-				{
-					SetUpDeck(decks);
-				}
-				ResetGame();
-				foreach (PlayerModel p in players)
-				{
-					SetUpBankroll(p);
-				}
-				InitialDeal();
-				foreach (PlayerModel p in players)
-				{
-					if (offerInsurance && (int)dealer.hand[0].MyValue == 11)
-					{
-						GetInsurance(p);
-					}
-					if ((int)p.hand[0].MyFaceValue == (int)p.hand[1].MyFaceValue && allowSplitFlag && dealer.total != 21)
-					{
-						p.totalSplitOffered++;
-						p.handSplitOffered = 1;
-						AllowSplit(p);
-					}
-
-					if ((p.total == 9 || p.total == 10 || p.total == 11) && allowDoubleDown && dealer.total != 21)
-					{
-						p.totalDoubleDownOffered++;
-						p.handDoubleDownOffered = 1;
-						AllowDD(p, p.total);
-					}
-					PlayCards(p);
-				}
-				DealerTurn();
-				DisplayBank();
-				GetStats();
-			}
-			DisplayStats();
-			WriteToFile();
-			Console.ReadLine();
 		}
 
 		private void PlayCards(PlayerModel p)
@@ -2085,6 +2090,13 @@ namespace BJSimLib
 			dealer.cardNumber += 1;
 			dealer.hand[dealer.cardNumber] = GetDeck[nextCardIndex];
 			nextCardIndex++;
+			if (playGame)
+			{
+				y = dealerCardPosition;
+				x = dealer.cardNumber;
+				DrawCards.DrawCardOutline(x, y);
+				DrawCards.DrawCardSuitValue(dealer.hand[dealer.cardNumber], x, y); 
+			}
 			DealerHandTotal();
 		}
 
@@ -2115,6 +2127,10 @@ namespace BJSimLib
 
 		private void DealerTurn()
 		{
+			if (playGame)
+			{
+				ShowDealerCard();
+			}
 			if (hitOnSoft17 && IfSoftAce(dealer.hand))
 			{
 				while (dealer.total < 18 && dealer.total <= 21)
@@ -2533,8 +2549,6 @@ namespace BJSimLib
 			dealer.totalNaturalBJ = 0;
 			dealer.handBust = 0;
 			dealer.handNaturalBJ = 0;
-
-
 			foreach (PlayerModel p in players)
 			{
 				p.getInsurance = false;
