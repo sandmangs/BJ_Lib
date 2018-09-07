@@ -22,6 +22,7 @@ namespace BJSimLib
 		public const int playerMessagePosition = 29;
 		public const int player2MessagePosition = 45;
 		public const int playerBetPosition = 35;
+		public const int playerInsurancePosition = 60;
 		public const int headerBetPosition = 80;
 		public const int headerBankPosition = 40;
 
@@ -174,13 +175,93 @@ namespace BJSimLib
 			foreach (PlayerModel p in players)
 			{
 				SetUpBankroll(p);
-				GameBankUpdate(p);
+				BankUpdate(p);
 				InitialDeal();
 				DisplayCards(p);
 				GamePlayCards(p);
 			}
 			DealerTurn();
-			GetStats();	
+			//GetStats();	
+		}
+
+		private void UpdateHandBet(int xPos, int yPos, double bet, string color)
+		{
+			Console.SetCursorPosition(xPos, yPos);
+			switch (color)
+			{
+				case "Red":
+					Console.ForegroundColor = ConsoleColor.Red;
+					Console.Write("Bet Won: {0:c}", bet);
+					break;
+				case "DarkGreen":
+					Console.ForegroundColor = ConsoleColor.DarkGreen;
+					Console.Write("Bet Won: {0:c}", bet);
+					break;
+				case "DarkMagenta":
+					Console.ForegroundColor = ConsoleColor.DarkMagenta;
+					Console.Write("Bet Won: {0:c}", bet);
+					break;
+				case "DarkRed":
+					Console.ForegroundColor = ConsoleColor.DarkRed;
+					Console.Write("Bet: {0:c}", bet);
+					break;
+				default:
+					break;
+			}
+			Console.SetCursorPosition(0, y);
+		}
+
+		private void UpdateInsuranceBet(int xPos, int yPos, double bet, string color)
+		{
+			Console.SetCursorPosition(xPos, yPos);
+			switch (color)
+			{
+				case "Red":
+					Console.ForegroundColor = ConsoleColor.Red;
+					break;
+				case "DarkGreen":
+					Console.ForegroundColor = ConsoleColor.DarkGreen;
+					break;
+				default:
+					break;
+			}
+			Console.Write("Insurance Bet Won: {0:c}", bet);
+			Console.SetCursorPosition(0, y);
+		}
+
+		private void DisplayMessage(string message, string color) // 
+		{
+			Console.SetCursorPosition(0, y);
+			ClearCurrentConsoleLine();
+			switch (color)
+			{
+				case "Red":
+					Console.ForegroundColor = ConsoleColor.Red;
+					break;
+				case "DarkGreen":
+					Console.ForegroundColor = ConsoleColor.DarkGreen;
+					break;
+				case "DarkMagenta":
+					Console.ForegroundColor = ConsoleColor.DarkMagenta;
+					break;
+				case "DarkRed":
+					Console.ForegroundColor = ConsoleColor.DarkRed;
+					break;
+				default:
+					break;
+			}
+			Console.WriteLine(message);
+			Console.SetCursorPosition(0, y);
+		}
+
+		private void ClearMessageArea()
+		{
+			Console.SetCursorPosition(x, y);
+			ClearCurrentConsoleLine();
+			Console.SetCursorPosition(x, y + 1);
+			ClearCurrentConsoleLine();
+			Console.SetCursorPosition(x, y + 2);
+			ClearCurrentConsoleLine();
 		}
 
 		public void Deal(int plyrBankroll, int plyrBet, int rnTimes)
@@ -249,58 +330,53 @@ namespace BJSimLib
 			Console.SetCursorPosition(0, currentLineCursor);
 		}
 
+		private void CreateMenu(PlayerModel p)
+		{
+			Console.ForegroundColor = ConsoleColor.Black;
+			Console.WriteLine("Play Options");
+			Console.ForegroundColor = ConsoleColor.DarkCyan;
+			ClearCurrentConsoleLine();
+			Console.Write("(H)it   (S)tay   "); // Always show these menu options
+			if (p.firstOption && (int)dealer.hand[0].MyValue == 11 && !p.insurance) // only show if dealer up card is an ace
+			{
+				Console.Write("(I)nsurance   ");
+			}
+			if ((p.firstOption || p.first2Option && p.isSplit) && (p.total == 9 || p.total == 10 || p.total == 11) || (p.total2 == 9 || p.total2 == 10 || p.total2 == 11)) // Allow double down if players card is between 9 and 11
+			{
+				Console.Write("(D)ouble Down   ");
+			}
+			if (p.firstOption && p.hand[0].MyFaceValue == p.hand[1].MyFaceValue) // If players two cards match, allow split of hand
+			{
+				Console.Write("s(P)lit   ");
+			}
+			Console.WriteLine();
+		}
+
 		private void GamePlayCards(PlayerModel p)
 		{
-			//char playerMove = ' '; // keypress from player
 			if (!p.turnOver)
 			{
-				Console.ForegroundColor = ConsoleColor.Black;
-				Console.WriteLine("Play Options");
-				Console.ForegroundColor = ConsoleColor.DarkCyan;
-				ClearCurrentConsoleLine();
-				Console.Write("(H)it   (S)tay   ");
-				if (p.firstOption && (int)dealer.hand[0].MyValue == 11 && !p.insurance)
-				{
-					Console.Write("(I)nsurance   ");
-				}
-				if (p.firstOption && (p.total == 9 || p.total == 10 || p.total == 11))
-				{
-					Console.Write("(D)ouble Down   ");
-				}
-				if (p.firstOption && p.hand[0].MyFaceValue == p.hand[1].MyFaceValue)
-				{
-					Console.Write("s(P)lit   ");
-				}
-				Console.WriteLine();
+				CreateMenu(p);
 			}
 			while (!p.turnOver)
 			{
 				ConsoleKeyInfo playerMove = Console.ReadKey(true);
 				if ((playerMove.KeyChar == 'I' || playerMove.KeyChar == 'i') && (int)dealer.hand[0].MyValue == 11)
 				{
-					Console.SetCursorPosition(x, y);
-					ClearCurrentConsoleLine();
-					Console.SetCursorPosition(x, y + 1);
-					ClearCurrentConsoleLine();
+					ClearMessageArea();
 					InsuranceOption(p);
 				}
 				else if (p.firstOption && (int)dealer.hand[0].MyValue == 11 && dealer.total == 21)
 				{
-					Console.SetCursorPosition(0, y);
-					ClearCurrentConsoleLine();
-					Console.SetCursorPosition(0, y + 1);
-					ClearCurrentConsoleLine();
-					Console.SetCursorPosition(0, y);
-					Console.ForegroundColor = ConsoleColor.DarkRed;
-					Console.WriteLine("Dealer has a natural Blackjack!  You didn't buy insurance and lose the hand!");
+					ClearMessageArea();
+					DisplayMessage("Dealer has a natural Blackjack!!  You didn't buy insurance and lose the hand!!", "DarkRed");
 					p.betResult = -p.bet;
-					Console.ForegroundColor = ConsoleColor.Red;
-					Console.SetCursorPosition(playerBetPosition, playerCardPosition - 1);
-					Console.Write("Bet Won: ${0}", p.betResult);
+					UpdateHandBet(playerBetPosition, playerCardPosition - 1, p.betResult, "Red");  // Display player bet results
 					Console.Beep();
 					p.turnOver = true;
 					p.gameOver = true;
 					ShowDealerCard();
+					DealerHandTotal();
 					HandTotal(p);
 				}
 				else if (playerMove.KeyChar == 'H' || playerMove.KeyChar == 'h')
@@ -333,23 +409,12 @@ namespace BJSimLib
 
 					if (!p.isSplit || p.secondHand)
 					{
-						Console.SetCursorPosition(x, y);
-						ClearCurrentConsoleLine();
-						Console.SetCursorPosition(x, y + 1);
-						ClearCurrentConsoleLine();
-						Console.SetCursorPosition(x, y + 2);
-						ClearCurrentConsoleLine();
+						ClearMessageArea();
 						p.turnOver = true;
 					}
 					else if (p.isSplit && !p.secondHand)
 					{
-						Console.SetCursorPosition(x, y);
-						ClearCurrentConsoleLine();
-						Console.SetCursorPosition(x, y + 1);
-						ClearCurrentConsoleLine();
-						Console.SetCursorPosition(x, y + 2);
-						ClearCurrentConsoleLine();
-						// y = player2MessagePosition + 4;
+						ClearMessageArea();
 						p.secondHand = true;
 					}
 				}
@@ -362,12 +427,7 @@ namespace BJSimLib
 				}
 				else
 				{
-					Console.SetCursorPosition(x, y);
-					ClearCurrentConsoleLine();
-					Console.SetCursorPosition(x, y + 1);
-					ClearCurrentConsoleLine();
-					Console.SetCursorPosition(x, y + 2);
-					ClearCurrentConsoleLine();
+					ClearMessageArea();
 					Console.ForegroundColor = ConsoleColor.Red;
 					Console.WriteLine("Invalid key pressed!");
 				}
@@ -375,51 +435,22 @@ namespace BJSimLib
 				{
 					if (!p.secondHand)
 					{
-						Console.ForegroundColor = ConsoleColor.Black;
 						Console.SetCursorPosition(0, y);
-						Console.WriteLine("Play Options");
-						Console.SetCursorPosition(x, y + 1);
-						ClearCurrentConsoleLine();
-						Console.ForegroundColor = ConsoleColor.DarkCyan;
-						Console.Write("(H)it   (S)tay   ");
-						if (p.firstOption && (int)dealer.hand[0].MyValue == 11 && !p.insurance)
-						{
-							Console.Write("(I)nsurance   ");
-						}
-						if (p.firstOption && (p.total == 9 || p.total == 10 || p.total == 11))
-						{
-							Console.Write("(D)ouble Down   ");
-						}
-						if (p.firstOption && p.hand[0].MyValue == p.hand[1].MyValue)
-						{
-							Console.Write("s(P)lit   ");
-						}
-						Console.WriteLine();
+						CreateMenu(p);
 					}
 					else
 					{
 						Console.ForegroundColor = ConsoleColor.Black;
 						y = player2MessagePosition;
 						Console.SetCursorPosition(0, y);
-						Console.WriteLine("Play Options");
-						Console.SetCursorPosition(x, y + 1);
-						ClearCurrentConsoleLine();
-						Console.ForegroundColor = ConsoleColor.DarkCyan;
-						Console.Write("(H)it   (S)tay   ");
-						if (p.firstOption && (int)dealer.hand[0].MyValue == 11 && !p.insurance)
-						{
-							Console.Write("(I)nsurance   ");
-						}
-						if (((p.firstOption && !p.secondHand) || (p.first2Option && p.secondHand)) && (p.total == 9 || p.total == 10 || p.total == 11))
-						{
-							Console.Write("(D)ouble Down   ");
-						}
-						if (p.firstOption && p.hand[0].MyValue == p.hand[1].MyValue)
-						{
-							Console.Write("s(P)lit   ");
-						}
-						Console.WriteLine();
-						ClearCurrentConsoleLine();
+						CreateMenu(p);
+					}
+				}
+				else
+				{
+					if (playGame)
+					{
+						BankUpdate(p);
 					}
 				}
 			}
@@ -452,9 +483,6 @@ namespace BJSimLib
 			// Display player bet
 			y = playerCardPosition;
 			x = 0;
-			Console.SetCursorPosition(playerBetPosition, y - 1);
-			Console.ForegroundColor = ConsoleColor.DarkRed;
-			Console.Write("Bet: ${0}", p.bet);
 
 			// Display player hand
 			Console.SetCursorPosition(x, y - 1);
@@ -466,6 +494,7 @@ namespace BJSimLib
 				DrawCards.DrawCardSuitValue(p.hand[i], x, y);
 				x++;
 			}
+			UpdateHandBet(playerBetPosition, playerCardPosition - 1, p.bet, "DarkRed");  // Display player bet
 			y = playerMessagePosition; // move row below player cards
 			x = 0;
 			Console.SetCursorPosition(x, y);
@@ -473,87 +502,6 @@ namespace BJSimLib
 			p.cardNumber = 1;
 			dealer.cardNumber = 1;
 			HandTotal(p);  // Display the player hand total and dealer 'unknown' label
-		}
-
-		private void GameInitialDeal(PlayerModel p)
-		{
-			if (p.total == 21 && dealer.total != 21)  // Player wins 1.5 times the bet with a natural BJ and dealer doesn't
-			{
-				Console.SetCursorPosition(0, y);
-				Console.ForegroundColor = ConsoleColor.DarkGreen;
-				Console.WriteLine("BLACKJACK!!!  Player WINS!!!!");
-				p.betResult = p.bet * 1.5;
-				Console.SetCursorPosition(playerBetPosition, playerCardPosition - 1);
-				Console.Write("Bet Won: ${0}", p.betResult);
-				p.gameOver = true;
-				for (int i = 0; i < 3; i++)
-				{
-					Console.Beep();
-				}
-				GameBankUpdate(p);
-				ShowDealerCard();
-				HandTotal(p);
-				DealerHandTotal();
-				Console.SetCursorPosition(0, y + 2);
-			}
-			else if (p.total == 21 && dealer.total == 21)  // Player pushes with natural BJ if dealer also had natural BJ
-			{
-				Console.SetCursorPosition(0, y);
-				Console.ForegroundColor = ConsoleColor.DarkGreen;
-				Console.WriteLine("Both the Player and Dealer have BLACKJACK!!!  Tie game, Player takes back his chips!!!!");
-				p.betResult = 0;
-				Console.ForegroundColor = ConsoleColor.DarkMagenta;
-				Console.SetCursorPosition(playerBetPosition, playerCardPosition - 1);
-				Console.Write("Bet Won: ${0}", p.betResult);
-				p.gameOver = true;
-				Console.Beep();
-				GameBankUpdate(p);
-				ShowDealerCard();
-				HandTotal(p);
-				DealerHandTotal();
-				Console.SetCursorPosition(0, y + 2);
-			}
-		}
-
-		public void GameBankUpdate(PlayerModel p)  // Bankroll display and management
-		{
-			Console.SetCursorPosition(headerBetPosition, 0);
-			if (p.cardNumber == 0)  // First call per hand, set up bet / bankroll header
-			{
-				Console.ForegroundColor = ConsoleColor.DarkBlue;
-				Console.Write("Bet: ${0}", p.bet);
-				Console.SetCursorPosition(headerBankPosition, 0);
-				Console.Write("Bankroll: ${0}", p.bankroll);
-				Console.SetCursorPosition(x, y+1);
-			}
-			else if (!p.gameOver)  //  Update bet amounts based on double / insurance / split
-			{
-				Console.ForegroundColor = ConsoleColor.DarkBlue;
-				Console.Write("Bet: ${0}", p.bet + p.bet2 + p.insuranceBet);
-				Console.SetCursorPosition(x, y+1);
-			}
-			else  //  Game over bankroll calculations and display
-			{
-				//p.betWon = p.betResult + p.bet2Result + p.insuranceBetResult;
-				if (p.betWon > 0)
-				{
-					Console.ForegroundColor = ConsoleColor.DarkGreen;
-				}
-				else if (p.betWon == 0)
-				{
-					Console.ForegroundColor = ConsoleColor.DarkMagenta;
-				}
-				else
-				{
-					Console.ForegroundColor = ConsoleColor.Red;
-				}
-				Console.Write("Bet Won: ${0}", p.betWon);
-				Console.SetCursorPosition(headerBankPosition, 0);
-				Console.ForegroundColor = ConsoleColor.DarkBlue;
-				p.bankroll += p.betWon;
-				Console.Write("Bankroll: ${0}", p.bankroll);
-				Console.SetCursorPosition(0, y + 3);
-			}
 		}
 
 		private void ShowDealerCard()
@@ -568,8 +516,8 @@ namespace BJSimLib
 				DrawCards.DrawCardOutline(x, y);
 				DrawCards.DrawCardSuitValue(dealer.hand[i], x, y);
 				x++;//move to the right
-				showDealCard = true; // TODO move outside of for loop
 			}
+			showDealCard = true; // TODO move outside of for loop
 			y = temp;
 		}
 
@@ -2109,19 +2057,36 @@ namespace BJSimLib
 				p.betResult = p.bet * 2;
 				p.totalWin++;
 				p.handWin = 1;
-				//if (p.isSplit)
-				//{
-				//	p.handSplitWin = 1;
-				//}
+				if (playGame)
+				{
+					y = playerMessagePosition;
+					DisplayMessage("Dealer BUSTED!!  You WIN!!", "DarkGreen");
+					UpdateHandBet(playerBetPosition, playerCardPosition - 1, p.betResult - p.bet, "DarkGreen");  // Display player bet results
+				}
 			}
 			if (p.isSplit && p.total2 <= 21)
 			{
 				p.bet2Result = p.bet2 * 2;
 				p.totalWin2++;
 				p.handWin2 = 1;
-				//p.handSplit2Win = 1;
+				if (playGame)
+				{
+					y = player2MessagePosition;
+					DisplayMessage("Dealer BUSTED!!  You WIN!!", "DarkGreen");
+					UpdateHandBet(playerBetPosition, player2CardPosition - 1, p.bet2Result - p.bet2, "DarkGreen");  // Display player bet results
+				}
 			}
 			p.gameOver = true;
+			if (playGame)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					Console.Beep();
+				}
+				Console.SetCursorPosition(0, y + 1);
+				ClearCurrentConsoleLine();
+				Console.WriteLine();
+			}
 			BankUpdate(p);
 		}
 
@@ -2130,6 +2095,7 @@ namespace BJSimLib
 			if (playGame)
 			{
 				ShowDealerCard();
+				DealerHandTotal();
 			}
 			if (hitOnSoft17 && IfSoftAce(dealer.hand))
 			{
@@ -2158,6 +2124,10 @@ namespace BJSimLib
 						p.betResult = p.bet * 2;
 						p.handWin = 1;
 						p.totalWin++;
+						if (playGame)
+						{
+							PlayerWins(playerMessagePosition, playerCardPosition, p.betResult - p.bet);
+						}
 						p.gameOver = true;
 						BankUpdate(p);
 					}
@@ -2166,6 +2136,10 @@ namespace BJSimLib
 						p.betResult = 0;
 						p.handLoss = 1;
 						p.totalLoss++;
+						if (playGame)
+						{
+							DealerWins(playerMessagePosition, playerCardPosition, p.betResult - p.bet);
+						}
 						p.gameOver = true;
 						BankUpdate(p);
 					}
@@ -2174,6 +2148,10 @@ namespace BJSimLib
 						p.betResult = p.bet + 0;
 						p.handPush = 1;
 						p.totalPush++;
+						if (playGame)
+						{
+							PushHand(playerMessagePosition, playerCardPosition, p.betResult - p.bet);
+						}
 						p.gameOver = true;
 						BankUpdate(p);
 					}
@@ -2188,46 +2166,96 @@ namespace BJSimLib
 					{
 						p.betResult = p.bet * 2;
 						p.handWin = 1;
-						//p.handSplitWin = 1;
 						p.totalWin++;
+						if (playGame)
+						{
+							PlayerWins(playerMessagePosition, playerCardPosition, p.betResult - p.bet);
+						}
 					}
 					else if (dealer.total > p.total)
 					{
 						p.betResult = 0;
 						p.handLoss = 1;
-						//p.handSplitLoss = 1;
 						p.totalLoss++;
+						if (playGame)
+						{
+							DealerWins(playerMessagePosition, playerCardPosition, p.betResult - p.bet);
+						}
 					}
 					else if (dealer.total == p.total)
 					{
 						p.betResult = p.bet + 0;
 						p.handPush = 1;
-						//p.handSplitPush = 1;
 						p.totalPush++;
+						if (playGame)
+						{
+							PushHand(playerMessagePosition, playerCardPosition, p.betResult - p.bet);
+						}
 					}
 					if (p.total2 > dealer.total && p.total2 < 22)
 					{
 						p.bet2Result = p.bet2 * 2;
 						p.handWin2 = 1;
-						//p.handSplit2Win = 1;
 						p.totalWin2++;
+						if (playGame)
+						{
+							PlayerWins(player2MessagePosition, player2CardPosition, p.bet2Result - p.bet2);
+						}
 					}
 					else if (dealer.total > p.total2 && dealer.total < 22)
 					{
 						p.bet2Result = 0;
 						p.handLoss2 = 1;
-						//p.handSplit2Loss = 1;
 						p.totalLoss2++;
+						if (playGame)
+						{
+							DealerWins(player2MessagePosition, player2CardPosition, p.bet2Result - p.bet2);
+						}
 					}
 					else if (dealer.total == p.total2 && dealer.total < 22)
 					{
 						p.bet2Result = p.bet2 + 0;
 						p.handPush2 = 1;
-						//p.handSplit2Push = 1;
+						if (playGame)
+						{
+							PushHand(player2MessagePosition, player2CardPosition, p.bet2Result - p.bet2);
+						}
 					}
-					BankUpdate(p);
+					if (playGame)
+					{
+						BankUpdate(p); 
+					}
 				}
 			}
+		}
+
+		private void PlayerWins(int yPosMessage, int yPosCard, double bet)
+		{
+			y = yPosMessage;
+			UpdateHandBet(playerBetPosition, yPosCard - 1, bet, "DarkGreen");  // Display player bet results
+			DisplayMessage("Player WINS!!  Nice Job!!", "DarkGreen");
+			for (int i = 0; i < 3; i++)
+			{
+				Console.Beep();
+			}
+		}
+
+		private void DealerWins(int yPosMessage, int yPosCard, double bet)
+		{
+			y = yPosMessage;
+			DisplayMessage("Dealer WINS!!  Better Luck Next Time!!", "DarkRed");
+			UpdateHandBet(playerBetPosition, yPosCard - 1, bet, "Red");  // Display player bet results
+			Console.WriteLine();
+			Console.Beep();
+		}
+
+		private void PushHand(int yPosMessage, int yPosCard, double bet)
+		{
+			y = yPosMessage;
+			DisplayMessage("Push!!  Tie game, take your chips back!!", "DarkMagenta");
+			UpdateHandBet(playerBetPosition, yPosCard - 1, bet, "DarkMagenta");  // Display player bet results
+			Console.Beep();
+			Console.WriteLine();
 		}
 
 		private bool IfSoftAce(Cards[] hnd)
@@ -2260,6 +2288,11 @@ namespace BJSimLib
 			p.handInsuranceBought = 1;
 			p.insuranceBet = p.bet * .5;
 			p.betTotal += p.insuranceBet;
+			if (playGame)
+			{
+				y = playerMessagePosition;
+				BankUpdate(p);
+			}
 			if (dealer.total == 21)
 			{
 				p.totalInsuranceWin++;
@@ -2267,11 +2300,26 @@ namespace BJSimLib
 				dealer.totalNaturalBJ++;
 				dealer.handNaturalBJ = 1;
 				p.insuranceBetResult = p.insuranceBet + p.insuranceBet * 2;
+				if (playGame)
+				{
+					UpdateInsuranceBet(playerInsurancePosition, playerCardPosition - 1, p.insuranceBetResult - p.insuranceBet, "DarkGreen");
+					Console.SetCursorPosition(0, y + 2);
+					ClearCurrentConsoleLine();
+					Console.SetCursorPosition(0, y);
+				}
 				if (p.total == 21)
 				{
 					p.betResult = p.bet + 0;
 					p.totalPush++;
 					p.handPush = 1;
+					if (playGame)
+					{
+						Console.ForegroundColor = ConsoleColor.DarkGreen;
+						Console.Write("Dealer had Blackjack! You saved by using insurance!  ");
+						Console.ForegroundColor = ConsoleColor.DarkMagenta;
+						Console.WriteLine("Player pushes with Blackjack!");
+						UpdateHandBet(playerBetPosition, playerCardPosition - 1, p.betResult - p.bet, "DarkMagenta");  // Display player bet results
+					}
 				}
 				else
 				{
@@ -2279,6 +2327,19 @@ namespace BJSimLib
 					p.betResult = 0;
 					p.totalLoss++;
 					p.handLoss = 1;
+					if (playGame)
+					{
+						Console.ForegroundColor = ConsoleColor.DarkGreen;
+						Console.Write("Dealer had Blackjack! You saved by using insurance!");
+						Console.ForegroundColor = ConsoleColor.Red;
+						Console.WriteLine("  Player loses original bet!");
+						UpdateHandBet(playerBetPosition, playerCardPosition - 1, p.betResult - p.bet, "Red");  // Display player bet results
+					}
+				}
+				if (playGame)
+				{
+					Console.SetCursorPosition(0, playerMessagePosition);
+					ShowDealerCard();
 				}
 				p.turnOver = true;
 				p.gameOver = true;
@@ -2289,6 +2350,17 @@ namespace BJSimLib
 				p.totalInsuranceLoss++;
 				p.handInsuranceLoss = 1;
 				p.insuranceBetResult = 0;
+				if (playGame)
+				{
+					UpdateInsuranceBet(playerInsurancePosition, playerCardPosition - 1, p.insuranceBetResult - p.insuranceBet, "Red");
+					Console.SetCursorPosition(0, y + 2);
+					ClearCurrentConsoleLine();
+					DisplayMessage("Dealer does not have Blackjack, press a key to continue!", "DarkRed");
+					Console.WriteLine();
+					Console.ReadKey();
+					Console.SetCursorPosition(0, y);
+					ClearCurrentConsoleLine();
+				}
 			}
 		}
 
@@ -2336,6 +2408,15 @@ namespace BJSimLib
 				p.totalLoss++;
 				p.handLoss = 1;
 				p.betResult = 0;
+				if (playGame)
+				{
+					y = playerMessagePosition;
+					ClearMessageArea();
+					DisplayMessage("BUSTED!!  Dealer wins!!", "DarkRed");
+					UpdateHandBet(playerBetPosition, playerCardPosition - 1, p.betResult - p.bet, "Red");  // Display player bet results
+					BankUpdate(p);
+					Console.Beep();
+				}
 				if (!p.isSplit)
 				{
 					p.turnOver = true;
@@ -2344,8 +2425,10 @@ namespace BJSimLib
 				}
 				else
 				{
-					//p.totalSplitLoss++;
-					//p.handSplitLoss = 1;
+					if (playGame)
+					{
+						y = player2MessagePosition;
+					}
 					p.secondHand = true;
 				}
 				HandTotal(p);
@@ -2358,16 +2441,35 @@ namespace BJSimLib
 				p.totalLoss2++;
 				p.handBust2 = 1;
 				p.handLoss2 = 1;
-				//p.handSplit2Loss = 1;
+				if (playGame)
+				{
+					y = player2MessagePosition;
+					ClearMessageArea();
+					DisplayMessage("BUSTED!!  Dealer wins!!", "DarkRed");
+					UpdateHandBet(playerBetPosition, player2CardPosition - 1, p.bet2Result - p.bet2, "Red");  // Display player bet results
+					BankUpdate(p);
+					Console.Beep();
+				}
 				if (p.total > 21 && p.total2 > 21)
 				{
 					p.turnOver = true;
 					p.gameOver = true;
+					if (playGame)
+					{
+						ShowDealerCard();
+						DealerHandTotal();
+						Console.SetCursorPosition(0, y + 4);
+					}
 					BankUpdate(p);
 				}
 				else
 				{
 					p.turnOver = true;
+					if (playGame)
+					{
+						y = player2MessagePosition + 3;
+						Console.SetCursorPosition(0, y);
+					}
 				}
 			}
 		}
@@ -2378,11 +2480,21 @@ namespace BJSimLib
 			{
 				p.betTotal += p.bet;
 				p.bet = p.bet * 2;
+				if (playGame)
+				{
+					UpdateHandBet(playerBetPosition, playerCardPosition - 1, p.bet, "DarkRed");  // Display player bet
+					BankUpdate(p);
+				}
 			}
 			else
 			{
 				p.betTotal += p.bet2;
 				p.bet2 = p.bet2 * 2;
+				if (playGame)
+				{
+					UpdateHandBet(playerBetPosition, player2CardPosition - 1, p.bet2, "DarkRed");  // Display player bet
+					BankUpdate(p);
+				}
 			}
 			HitMe(p);
 			if (!p.isSplit || !p.secondHand)
@@ -2393,9 +2505,17 @@ namespace BJSimLib
 				}
 				else
 				{
+					if (playGame)
+					{
+						ClearMessageArea();
+					}
 					if (!p.isSplit)
 					{
 						p.turnOver = true;
+					}
+					else
+					{
+						y = player2MessagePosition;
 					}
 				}
 			}
@@ -2408,6 +2528,11 @@ namespace BJSimLib
 				else
 				{
 					p.turnOver = true;
+					if (playGame)
+					{
+						Console.SetCursorPosition(0, y + 1);
+						ClearCurrentConsoleLine();
+					}
 				}
 			}
 		}
@@ -2424,6 +2549,48 @@ namespace BJSimLib
 			p.bet2 = betAmount;
 			p.betTotal += p.bet2;
 			p.card2Number = 1;
+			if (playGame)
+			{
+				y = playerCardPosition;
+				Console.SetCursorPosition(0, y - 1);
+				ClearCurrentConsoleLine();
+				UpdateHandBet(playerBetPosition, playerCardPosition - 1, p.bet, "DarkRed");  // Display player bet
+				BankUpdate(p); // update bet and bankroll information within header
+				Console.SetCursorPosition(0, y - 1);
+				Console.ForegroundColor = ConsoleColor.DarkMagenta;
+				Console.WriteLine("Player's 1st HAND");
+				y = playerMessagePosition;
+				ClearMessageArea();
+				for (int i = 0; i < 11; i++) // erase the players old 2nd card in first hand
+				{
+					Console.SetCursorPosition(0, playerCardPosition + i);
+					ClearCurrentConsoleLine();
+				}
+				y = playerCardPosition; //move the row of player cards below the dealer's cards
+				x = 0; //reset x position
+				Console.SetCursorPosition(x, y);
+				for (int i = 0; i < 2; i++)  // Display player hand one
+				{
+					DrawCards.DrawCardOutline(x, y);
+					DrawCards.DrawCardSuitValue(p.hand[i], x, y);
+					x++;//move to the right
+				}
+				y = player2CardPosition; // move row below player cards
+				x = 0; // reset x position
+				Console.SetCursorPosition(playerBetPosition, y - 1);
+				UpdateHandBet(playerBetPosition, player2CardPosition - 1, p.bet2, "DarkRed");  // Display player bet
+				Console.SetCursorPosition(x, y - 1);
+				Console.ForegroundColor = ConsoleColor.DarkMagenta;
+				Console.WriteLine("Player's 2nd HAND");
+				Console.SetCursorPosition(x, y);
+				for (int i = 0; i < 2; i++)  // Display player hand one
+				{
+					DrawCards.DrawCardOutline(x, y);
+					DrawCards.DrawCardSuitValue(p.hand2[i], x, y);
+					x++;//move to the right
+				}
+				y = playerMessagePosition;
+			}
 			HandTotal(p);
 			if ((p.total == 9 || p.total == 10 || p.total == 11) && allowDoubleDown)
 			{
@@ -2478,24 +2645,39 @@ namespace BJSimLib
 				if (p.total == 21 && dealer.total != 21)
 				{
 					p.betResult = p.bet + p.bet * 1.5;
+					if (playGame)
+					{
+						DisplayMessage("BLACKJACK!!  Player WINS!!", "DarkGreen");
+						UpdateHandBet(playerBetPosition, playerCardPosition - 1, p.betResult - p.bet, "DarkGreen");  // Display player bet results
+						for (int i = 0; i < 3; i++)
+						{
+							Console.Beep();
+						}
+					}
 					p.totalNaturalBJ++;
 					p.handNaturalBJ = 1;
 					p.totalWin++;
 					p.handWin = 1;
 					p.turnOver = true;
 					p.gameOver = true;
+					BankUpdate(p);
 					if (playGame == true)
 					{
-						GameInitialDeal(p);
-					}
-					else
-					{
-						BankUpdate(p);
+						ShowDealerCard();
+						DealerHandTotal();
+						HandTotal(p);
+						Console.SetCursorPosition(0, y + 2);
 					}
 				}
 				else if (p.total == 21 && dealer.total == 21)
 				{
 					p.betResult = p.bet;
+					if (playGame)
+					{
+						DisplayMessage("Both the Player and Dealer have BLACKJACK!!  Tie game, Player takes back his chips!!", "DarkGreen");
+						UpdateHandBet(playerBetPosition, playerCardPosition - 1, p.betResult - p.bet, "DarkMagenta");  // Display player bet results
+						Console.Beep();
+					}
 					p.totalNaturalBJ++;
 					p.handNaturalBJ = 1;
 					p.totalDealerNaturalBJ++;
@@ -2506,13 +2688,13 @@ namespace BJSimLib
 					p.handPush = 1;
 					p.turnOver = true;
 					p.gameOver = true;
+					BankUpdate(p);
 					if (playGame == true)
 					{
-						GameInitialDeal(p);
-					}
-					else
-					{
-						BankUpdate(p);
+						ShowDealerCard();
+						DealerHandTotal();
+						HandTotal(p);
+						Console.SetCursorPosition(0, y + 2);
 					}
 				}
 			}
@@ -2531,13 +2713,59 @@ namespace BJSimLib
 			p.initialBankroll = p.bankroll;
 			p.betTotal += p.bet;
 			p.bankroll -= p.betTotal;
+			if (playGame)
+			{
+				Console.SetCursorPosition(headerBetPosition, 0);
+				Console.ForegroundColor = ConsoleColor.DarkBlue;
+				Console.Write("Bet: {0:c}", p.bet);
+				Console.SetCursorPosition(headerBankPosition, 0);
+				Console.Write("{0}'s Bankroll: {1:c}", p.name, p.bankroll);
+				Console.SetCursorPosition(x, y);
+			}
 		}
 
 		private void BankUpdate(PlayerModel player)
 		{
-			player.betWon = player.betResult + player.bet2Result + player.insuranceBetResult;
-			player.bankroll = player.initialBankroll - player.betTotal + player.betWon;
-			player.betResult = -player.betTotal + player.betWon;
+			
+
+			Console.SetCursorPosition(headerBetPosition, 0);
+			if (!player.gameOver)  //  Update bet amounts based on double / insurance / split
+			{
+					Console.ForegroundColor = ConsoleColor.DarkBlue;
+					Console.Write("Bet: {0:c}", player.bet + player.bet2 + player.insuranceBet);
+					Console.SetCursorPosition(headerBankPosition, 0);
+					Console.ForegroundColor = ConsoleColor.DarkBlue;
+					player.bankroll = initialBankTotal - player.betTotal;
+					Console.Write("{0}'s Bankroll: {1:c}", player.name, player.bankroll);
+					Console.SetCursorPosition(x, y); 
+			}
+			else  //  Game over bankroll calculations and display
+			{
+				player.betWon = player.betResult + player.bet2Result + player.insuranceBetResult;
+				player.bankroll = player.initialBankroll - player.betTotal + player.betWon;
+				player.betResult = -player.betTotal + player.betWon;
+
+				if (playGame)
+				{
+					if (player.bankroll > initialBankTotal) // Player wins
+					{
+						Console.ForegroundColor = ConsoleColor.DarkGreen;
+					}
+					else if (player.bankroll == initialBankTotal) // Push
+					{
+						Console.ForegroundColor = ConsoleColor.DarkMagenta;
+					}
+					else  // Player loses
+					{
+						Console.ForegroundColor = ConsoleColor.Red;
+					}
+					Console.Write("Bet Won: {0:c}", player.betResult);
+					Console.SetCursorPosition(headerBankPosition, 0);
+					Console.ForegroundColor = ConsoleColor.DarkBlue;
+					Console.Write("{0}'s Bankroll: {1:c}", player.name, player.bankroll);
+					Console.SetCursorPosition(0, y + 3); 
+				}
+			}
 		}
 
 		private void ResetGame()
