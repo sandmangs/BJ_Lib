@@ -116,7 +116,7 @@ namespace BJSimLib
 			//{
 			//	if ((int)deck[i].MyFaceValue == 10)
 			//	{
-			//		int secondCardIndex = 5;
+			//		int secondCardIndex = 2;
 			//		temp = deck[i];
 			//		deck[i] = deck[secondCardIndex];
 			//		deck[secondCardIndex] = temp;
@@ -130,7 +130,23 @@ namespace BJSimLib
 			//	{
 			//		if (tempr == 1)
 			//		{
-			//			int secondCardIndex = 2;
+			//			int secondCardIndex = 1;
+			//			temp = deck[i];
+			//			deck[i] = deck[secondCardIndex];
+			//			deck[secondCardIndex] = temp;
+			//			break;
+			//		}
+			//		tempr = 1;
+			//	}
+			//}
+			//tempr = 0;
+			//for (int i = 0; i < NUM_OF_CARDS; i++)
+			//{
+			//	if ((int)deck[i].MyFaceValue == 10)
+			//	{
+			//		if (tempr == 1)
+			//		{
+			//			int secondCardIndex = 3;
 			//			temp = deck[i];
 			//			deck[i] = deck[secondCardIndex];
 			//			deck[secondCardIndex] = temp;

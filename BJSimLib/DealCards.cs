@@ -23,8 +23,8 @@ namespace BJSimLib
 		public const int player2MessagePosition = 45;
 		public const int playerBetPosition = 35;
 		public const int playerInsurancePosition = 60;
-		public const int headerBetPosition = 80;
-		public const int headerBankPosition = 40;
+		public const int headerBetPosition = 65;
+		public const int headerBankPosition = 25;
 
 		int x = 0;
 		int y = 0;
@@ -182,6 +182,14 @@ namespace BJSimLib
 			}
 			DealerTurn();
 			//GetStats();	
+			if (!gamePlayer1.isSplit)
+			{
+				Console.SetCursorPosition(0, playerMessagePosition + 2);
+			}
+			else
+			{
+				Console.SetCursorPosition(0, player2MessagePosition + 2);
+			}
 		}
 
 		private void UpdateHandBet(int xPos, int yPos, double bet, string color)
@@ -494,7 +502,10 @@ namespace BJSimLib
 				DrawCards.DrawCardSuitValue(p.hand[i], x, y);
 				x++;
 			}
-			UpdateHandBet(playerBetPosition, playerCardPosition - 1, p.bet, "DarkRed");  // Display player bet
+			if (p.handNaturalBJ != 1)
+			{
+				UpdateHandBet(playerBetPosition, playerCardPosition - 1, p.bet, "DarkRed");  // Display player bet 
+			}
 			y = playerMessagePosition; // move row below player cards
 			x = 0;
 			Console.SetCursorPosition(x, y);
@@ -2097,14 +2108,14 @@ namespace BJSimLib
 				ShowDealerCard();
 				DealerHandTotal();
 			}
-			if (hitOnSoft17 && IfSoftAce(dealer.hand))
+			if (hitOnSoft17 && IfSoftAce(dealer.hand) && !gamePlayer1.gameOver)
 			{
 				while (dealer.total < 18 && dealer.total <= 21)
 				{
 					DealerHitMe();
 				}
 			}
-			else
+			else if (!gamePlayer1.gameOver)
 			{
 				while (dealer.total < 17 && dealer.total <= 21)
 				{
@@ -2647,6 +2658,7 @@ namespace BJSimLib
 					p.betResult = p.bet + p.bet * 1.5;
 					if (playGame)
 					{
+						y = playerMessagePosition;
 						DisplayMessage("BLACKJACK!!  Player WINS!!", "DarkGreen");
 						UpdateHandBet(playerBetPosition, playerCardPosition - 1, p.betResult - p.bet, "DarkGreen");  // Display player bet results
 						for (int i = 0; i < 3; i++)
@@ -2663,9 +2675,10 @@ namespace BJSimLib
 					BankUpdate(p);
 					if (playGame == true)
 					{
-						ShowDealerCard();
-						DealerHandTotal();
-						HandTotal(p);
+						showDealCard = true;
+						//ShowDealerCard();
+						//DealerHandTotal();
+						//HandTotal(p);
 						Console.SetCursorPosition(0, y + 2);
 					}
 				}
@@ -2674,6 +2687,7 @@ namespace BJSimLib
 					p.betResult = p.bet;
 					if (playGame)
 					{
+						y = playerMessagePosition;
 						DisplayMessage("Both the Player and Dealer have BLACKJACK!!  Tie game, Player takes back his chips!!", "DarkGreen");
 						UpdateHandBet(playerBetPosition, playerCardPosition - 1, p.betResult - p.bet, "DarkMagenta");  // Display player bet results
 						Console.Beep();
@@ -2691,10 +2705,11 @@ namespace BJSimLib
 					BankUpdate(p);
 					if (playGame == true)
 					{
-						ShowDealerCard();
-						DealerHandTotal();
-						HandTotal(p);
-						Console.SetCursorPosition(0, y + 2);
+						showDealCard = true;
+						//ShowDealerCard();
+						//DealerHandTotal();
+						//HandTotal(p);
+						//Console.SetCursorPosition(0, y + 2);
 					}
 				}
 			}
@@ -2713,21 +2728,19 @@ namespace BJSimLib
 			p.initialBankroll = p.bankroll;
 			p.betTotal += p.bet;
 			p.bankroll -= p.betTotal;
-			if (playGame)
-			{
-				Console.SetCursorPosition(headerBetPosition, 0);
-				Console.ForegroundColor = ConsoleColor.DarkBlue;
-				Console.Write("Bet: {0:c}", p.bet);
-				Console.SetCursorPosition(headerBankPosition, 0);
-				Console.Write("{0}'s Bankroll: {1:c}", p.name, p.bankroll);
-				Console.SetCursorPosition(x, y);
-			}
+			//if (playGame)
+			//{
+			//	Console.SetCursorPosition(headerBetPosition, 0);
+			//	Console.ForegroundColor = ConsoleColor.DarkBlue;
+			//	Console.Write("Bet: {0:c}", p.bet);
+			//	Console.SetCursorPosition(headerBankPosition, 0);
+			//	Console.Write("{0}'s Bankroll: {1:c}", p.name, p.bankroll);
+			//	Console.SetCursorPosition(x, y);
+			//}
 		}
 
 		private void BankUpdate(PlayerModel player)
 		{
-			
-
 			Console.SetCursorPosition(headerBetPosition, 0);
 			if (!player.gameOver)  //  Update bet amounts based on double / insurance / split
 			{
@@ -2735,7 +2748,7 @@ namespace BJSimLib
 					Console.Write("Bet: {0:c}", player.bet + player.bet2 + player.insuranceBet);
 					Console.SetCursorPosition(headerBankPosition, 0);
 					Console.ForegroundColor = ConsoleColor.DarkBlue;
-					player.bankroll = initialBankTotal - player.betTotal;
+					player.bankroll = player.initialBankroll - player.betTotal;
 					Console.Write("{0}'s Bankroll: {1:c}", player.name, player.bankroll);
 					Console.SetCursorPosition(x, y); 
 			}
@@ -2747,11 +2760,11 @@ namespace BJSimLib
 
 				if (playGame)
 				{
-					if (player.bankroll > initialBankTotal) // Player wins
+					if (player.bankroll > player.initialBankroll) // Player wins
 					{
 						Console.ForegroundColor = ConsoleColor.DarkGreen;
 					}
-					else if (player.bankroll == initialBankTotal) // Push
+					else if (player.bankroll == player.initialBankroll) // Push
 					{
 						Console.ForegroundColor = ConsoleColor.DarkMagenta;
 					}
@@ -2777,6 +2790,7 @@ namespace BJSimLib
 			dealer.totalNaturalBJ = 0;
 			dealer.handBust = 0;
 			dealer.handNaturalBJ = 0;
+			showDealCard = false;
 			foreach (PlayerModel p in players)
 			{
 				p.getInsurance = false;
@@ -2893,6 +2907,7 @@ namespace BJSimLib
 				}
 				if (playGame)
 				{
+					Console.ForegroundColor = ConsoleColor.DarkRed;
 					Console.SetCursorPosition(20, dealerCardPosition - 1);
 					if (!showDealCard && !gamePlayer1.gameOver)
 					{
