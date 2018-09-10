@@ -101,17 +101,17 @@ namespace BJSimLib
 
 			// Below used for testing purposes.  Uncomment and change card value and placement to test
 
-			//for (int i = 0; i < NUM_OF_CARDS; i++)
-			//{
-			//	if ((int)deck[i].MyFaceValue == 14)
-			//	{
-			//		int secondCardIndex = 0;
-			//		temp = deck[i];
-			//		deck[i] = deck[secondCardIndex];
-			//		deck[secondCardIndex] = temp;
-			//		break;
-			//	}
-			//}
+			for (int i = 0; i < NUM_OF_CARDS; i++)
+			{
+				if ((int)deck[i].MyFaceValue == 14)
+				{
+					int secondCardIndex = 0;
+					temp = deck[i];
+					deck[i] = deck[secondCardIndex];
+					deck[secondCardIndex] = temp;
+					break;
+				}
+			}
 			//for (int i = 0; i < NUM_OF_CARDS; i++)
 			//{
 			//	if ((int)deck[i].MyFaceValue == 10)
@@ -123,22 +123,22 @@ namespace BJSimLib
 			//		break;
 			//	}
 			//}
-			//int tempr = 0;
-			//for (int i = 0; i < NUM_OF_CARDS; i++)
-			//{
-			//	if ((int)deck[i].MyFaceValue == 14)
-			//	{
-			//		if (tempr == 1)
-			//		{
-			//			int secondCardIndex = 1;
-			//			temp = deck[i];
-			//			deck[i] = deck[secondCardIndex];
-			//			deck[secondCardIndex] = temp;
-			//			break;
-			//		}
-			//		tempr = 1;
-			//	}
-			//}
+			int tempr = 0;
+			for (int i = 0; i < NUM_OF_CARDS; i++)
+			{
+				if ((int)deck[i].MyFaceValue == 14)
+				{
+					if (tempr == 1)
+					{
+						int secondCardIndex = 2;
+						temp = deck[i];
+						deck[i] = deck[secondCardIndex];
+						deck[secondCardIndex] = temp;
+						break;
+					}
+					tempr = 1;
+				}
+			}
 			//tempr = 0;
 			//for (int i = 0; i < NUM_OF_CARDS; i++)
 			//{

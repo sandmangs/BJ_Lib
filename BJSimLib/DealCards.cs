@@ -2232,6 +2232,7 @@ namespace BJSimLib
 							PushHand(player2MessagePosition, player2CardPosition, p.bet2Result - p.bet2);
 						}
 					}
+					p.gameOver = true;
 					if (playGame)
 					{
 						BankUpdate(p); 
@@ -2432,7 +2433,7 @@ namespace BJSimLib
 				{
 					p.turnOver = true;
 					p.gameOver = true;
-					BankUpdate(p);
+					//BankUpdate(p);
 				}
 				else
 				{
