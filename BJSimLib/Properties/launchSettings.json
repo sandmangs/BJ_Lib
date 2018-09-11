@@ -2,7 +2,7 @@
   "profiles": {
     "BJSimLib": {
       "commandName": "Executable",
-      "executablePath": "C:\\Users\\gsand\\Source\\Repos\\PlayBJ\\PlayBJ\\bin\\Debug\\PlayBJ.exe"
+      "executablePath": "C:\\Users\\gsand\\Documents\\Source Code\\PlayBJ\\PlayBJ\\bin\\Debug\\PlayBJ.exe"
     }
   }
 }

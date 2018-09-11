@@ -2233,10 +2233,10 @@ namespace BJSimLib
 						}
 					}
 					p.gameOver = true;
-					if (playGame)
-					{
+					//if (playGame)
+					//{
 						BankUpdate(p); 
-					}
+					//}
 				}
 			}
 		}
@@ -2433,7 +2433,10 @@ namespace BJSimLib
 				{
 					p.turnOver = true;
 					p.gameOver = true;
-					//BankUpdate(p);
+					if (!playGame)
+					{
+						BankUpdate(p); 
+					}
 				}
 				else
 				{
