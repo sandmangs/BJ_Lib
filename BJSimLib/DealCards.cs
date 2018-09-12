@@ -16,15 +16,15 @@ namespace BJSimLib
 		List<PlayerModel> players = new List<PlayerModel>();
 		List<PlayerModel> gamePlayers = new List<PlayerModel>();
 
-		public const int dealerCardPosition = 4;
-		public const int playerCardPosition = 17;
-		public const int player2CardPosition = 33;
-		public const int playerMessagePosition = 29;
-		public const int player2MessagePosition = 45;
-		public const int playerBetPosition = 35;
-		public const int playerInsurancePosition = 60;
-		public const int headerBetPosition = 65;
-		public const int headerBankPosition = 25;
+		const int dealerCardPosition = 4;
+		const int playerCardPosition = 17;
+		const int player2CardPosition = 33;
+		const int playerMessagePosition = 29;
+		const int player2MessagePosition = 45;
+		const int playerBetPosition = 35;
+		const int playerInsurancePosition = 60;
+		const int headerBetPosition = 65;
+		const int headerBankPosition = 25;
 
 		int x = 0;
 		int y = 0;
@@ -181,7 +181,7 @@ namespace BJSimLib
 				GamePlayCards(p);
 			}
 			DealerTurn();
-			//GetStats();	
+			GetStats();	
 			if (!gamePlayer1.isSplit)
 			{
 				Console.SetCursorPosition(0, playerMessagePosition + 2);
@@ -347,14 +347,29 @@ namespace BJSimLib
 			Console.Write("(H)it   (S)tay   "); // Always show these menu options
 			if (p.firstOption && (int)dealer.hand[0].MyValue == 11 && !p.insurance) // only show if dealer up card is an ace
 			{
+				if (p.handInsuranceOffered != 1)
+				{
+					p.totalInsuranceOffered++;
+				}
+				p.handInsuranceOffered = 1;
 				Console.Write("(I)nsurance   ");
 			}
 			if ((p.firstOption || p.first2Option && p.isSplit) && (p.total == 9 || p.total == 10 || p.total == 11) || (p.total2 == 9 || p.total2 == 10 || p.total2 == 11)) // Allow double down if players card is between 9 and 11
 			{
+				if (p.handDoubleDownOffered != 1)
+				{
+					p.totalDoubleDownOffered++; 
+				}
+				p.handDoubleDownOffered = 1;
 				Console.Write("(D)ouble Down   ");
 			}
 			if (p.firstOption && p.hand[0].MyFaceValue == p.hand[1].MyFaceValue) // If players two cards match, allow split of hand
 			{
+				if (p.handSplitOffered != 1)
+				{
+					p.totalSplitOffered++; 
+				}
+				p.handSplitOffered = 1;
 				Console.Write("s(P)lit   ");
 			}
 			Console.WriteLine();
@@ -378,14 +393,21 @@ namespace BJSimLib
 				{
 					ClearMessageArea();
 					DisplayMessage("Dealer has a natural Blackjack!!  You didn't buy insurance and lose the hand!!", "DarkRed");
-					p.betResult = -p.bet;
-					UpdateHandBet(playerBetPosition, playerCardPosition - 1, p.betResult, "Red");  // Display player bet results
+					p.betResult = 0;
+					//p.betResult = -p.bet;
+					UpdateHandBet(playerBetPosition, playerCardPosition - 1, -p.bet, "Red");  // Display player bet results
 					Console.Beep();
 					p.turnOver = true;
 					p.gameOver = true;
 					ShowDealerCard();
 					DealerHandTotal();
 					HandTotal(p);
+					p.totalDealerNaturalBJ++;
+					p.handDealerNaturalBJ = 1;
+					p.totalInsuranceDeclineLoss++;
+					p.handInsuranceDeclineLoss = 1;
+					p.totalLoss++;
+					p.handLoss = 1;
 				}
 				else if (playerMove.KeyChar == 'H' || playerMove.KeyChar == 'h')
 				{
@@ -402,6 +424,16 @@ namespace BJSimLib
 
 				else if ((playerMove.KeyChar == 'D' || playerMove.KeyChar == 'd') && ((p.firstOption && !p.secondHand) || (p.first2Option && p.secondHand)) && (p.total == 9 || p.total == 10 || p.total == 11))
 				{
+					p.totalDoubleDownAccepted++;
+					p.handDoubleDownAccepted = 1;
+					if (!p.secondHand)
+					{
+						p.doubleDownFlag = 1;
+					}
+					else
+					{
+						p.doubleDown2Flag = 1;
+					}
 					DoubleDown(p);
 					if (!p.gameOver && !p.isSplit || p.secondHand)
 					{
@@ -428,6 +460,8 @@ namespace BJSimLib
 				}
 				else if ((playerMove.KeyChar == 'P' || playerMove.KeyChar == 'p') && p.firstOption && p.hand[0].MyFaceValue == p.hand[1].MyFaceValue)
 				{
+					p.totalSplitAccepted++;
+					p.handSplitAccepted = 1;
 					Console.SetCursorPosition(0, playerMessagePosition + 2);
 					ClearCurrentConsoleLine();
 					p.isSplit = true;
@@ -1411,11 +1445,14 @@ namespace BJSimLib
 				File.WriteAllLines(path2, p.finalResults);
 				playnum++;
 			}
-			Console.SetCursorPosition(20, 42);
-			Console.WriteLine("Press a key to continue");
-			Console.ReadLine();
-			Console.Clear();
-			Console.SetCursorPosition(0, 2);
+			if (!playGame)
+			{
+				Console.SetCursorPosition(20, 42);
+				Console.WriteLine("Press a key to continue");
+				Console.ReadLine();
+				Console.Clear();
+				Console.SetCursorPosition(0, 2); 
+			}
 			for (int i = 4; i < 23; i++)
 			{
 				LoadHandsFile(i);
@@ -1425,9 +1462,12 @@ namespace BJSimLib
 				p.startingHandTotals.Add($"Total Betx Won / Loss,,,{p.bankroll - initialBankTotal},,,,,,,,,");
 				totalResult += p.bankroll - initialBankTotal;
 			}
-			Console.WriteLine();
-			Console.WriteLine("Total Bets Won / Loss                 {0,28:c2}", totalResult);
-			Console.WriteLine();
+			if (!playGame)
+			{
+				Console.WriteLine();
+				Console.WriteLine("Total Bets Won / Loss                 {0,28:c2}", totalResult);
+				Console.WriteLine(); 
+			}
 			for (int i = 2; i < 12; i++)
 			{
 				LoadDealerHandFile(i);
@@ -1438,9 +1478,12 @@ namespace BJSimLib
 				p.startingHandTotals.Add($"Total Betx Won / Loss,,,{(p.bankroll - initialBankTotal)},,,,,,,,,");
 				totalResult += p.bankroll - initialBankTotal;
 			}
-			Console.WriteLine();
-			Console.WriteLine("Total Bets Won / Loss                {0,28:c2}", totalResult);
-			Console.WriteLine();
+			if (!playGame)
+			{
+				Console.WriteLine();
+				Console.WriteLine("Total Bets Won / Loss                {0,28:c2}", totalResult);
+				Console.WriteLine(); 
+			}
 			playnum = 1;
 			foreach (PlayerModel p in players)
 			{
@@ -1465,6 +1508,20 @@ namespace BJSimLib
 			int totalLossesStand = 0;
 			int totalPushesStand = 0;
 			int playnum = 1;
+			double betTotal = 0;
+			int handsTotal = 0;
+			int wins = 0;
+			int winsHit = 0;
+			int winsStand = 0;
+			int hitBusts = 0;
+			double hitTotal = 0;
+			int losses = 0;
+			int lossesHit = 0;
+			int lossesStand = 0;
+			double standTotal = 0;
+			int pushs = 0;
+			int pushsHit = 0;
+			int pushsStand = 0;
 			foreach (PlayerModel p in players)
 			{
 				string[] lines = File.ReadAllLines(@"C:\temp\player" + playnum + "hands.csv");
@@ -1475,20 +1532,6 @@ namespace BJSimLib
 
 					if (cardValue == int.Parse(cols[45]))
 					{
-						double betTotal = 0;
-						int handsTotal = 0;
-						int wins = 0;
-						int winsHit = 0;
-						int winsStand = 0;
-						int hitBusts = 0;
-						double hitTotal = 0;
-						int losses = 0;
-						int lossesHit = 0;
-						int lossesStand = 0;
-						double standTotal = 0;
-						int pushs = 0;
-						int pushsHit = 0;
-						int pushsStand = 0;
 						double bet = 0;
 						int win = 0;
 						int loss = 0;
@@ -1514,6 +1557,7 @@ namespace BJSimLib
 							if (busts == 1)
 							{
 								hitBusts++;
+								totalHitBusts++;
 							}
 						}
 						else
@@ -1522,92 +1566,93 @@ namespace BJSimLib
 							standTotal += bet;
 						}
 						handsTotal++;
+						totalHandsTotal++;
 						betTotal += bet;
+						totalBetTotal += bet;
 						if (win == 1)
 						{
 							wins++;
+							totalWins++;
 							if (hit)
 							{
 								winsHit++;
+								totalWinsHit++;
 							}
 							else
 							{
 								winsStand++;
+								totalWinsStand++;
 							}
 						}
 						else if (loss == 1)
 						{
 							losses++;
+							totalLosses++;
 							if (hit)
 							{
 								lossesHit++;
+								totalLossesHit++;
 							}
 							else
 							{
 								lossesStand++;
+								totalLossesStand++;
 							}
 						}
 						else
 						{
 							pushs++;
+							totalPushes++;
 							if (hit)
 							{
 								pushsHit++;
+								totalPushesHit++;
 							}
 							else
 							{
 								pushsStand++;
+								totalPushesStand++;
 							}
-						}
-						
-						p.startingHandTotals.Add($"{cardValue},{handsTotal},{betTotal},{wins},{losses},{pushs},{winsHit},{lossesHit},{pushsHit},{hitBusts},{winsStand},{lossesStand},{pushsStand}");
-						totalHandsTotal += handsTotal;
-						totalBetTotal += betTotal;
-						totalWins += wins;
-						totalLosses += losses;
-						totalPushes += pushs;
-						totalWinsHit += winsHit;
-						totalLossesHit += lossesHit;
-						totalPushesHit += pushsHit;
-						totalHitBusts += hitBusts;
-						totalWinsStand += winsStand;
-						totalLossesStand += lossesStand;
-						totalPushesStand += pushsStand;
+						}	
 					}
 				}
+				p.startingHandTotals.Add($"{cardValue},{handsTotal},{betTotal},{wins},{losses},{pushs},{winsHit},{lossesHit},{pushsHit},{hitBusts},{winsStand},{lossesStand},{pushsStand}");
 				playnum++;
 			}
 
-			double odds = ((double)totalHandsTotal / ((double)runTimes * players.Count())) * 100;
-			int currentLineCursor = Console.CursorTop;
-			Console.Write(" Starting Hand: {0,2}", cardValue);
-			Console.SetCursorPosition(20, currentLineCursor);
-			Console.Write("Hands: {0,5:n0}", totalHandsTotal);
-			Console.SetCursorPosition(34, currentLineCursor);
-			Console.Write("Per: {0,6:n2} %", odds);
-			Console.SetCursorPosition(49, currentLineCursor);
-			Console.Write("W/L: {0,11:c0}", totalBetTotal);
-			Console.SetCursorPosition(67, currentLineCursor);
-			Console.Write("Ws: {0,4:n0}", totalWins);
-			Console.SetCursorPosition(77, currentLineCursor);
-			Console.Write("Ls: {0,4:n0}", totalLosses);
-			Console.SetCursorPosition(87, currentLineCursor);
-			Console.Write("Ps: {0,4:n0}", totalPushes);
-			Console.SetCursorPosition(97, currentLineCursor);
-			Console.Write("Hit Ws: {0,4:n0}", totalWinsHit);
-			Console.SetCursorPosition(111, currentLineCursor);
-			Console.Write("Hit Ls: {0,4:n0}", totalLossesHit);
-			Console.SetCursorPosition(125, currentLineCursor);
-			Console.Write("Hit Ps: {0,4:n0}", totalPushesHit);
-			Console.SetCursorPosition(139, currentLineCursor);
-			Console.Write("Hit Busts: {0,3}", totalHitBusts);
-			Console.SetCursorPosition(155, currentLineCursor);
-			Console.Write("Stand Ws: {0,4:n0}", totalWinsStand);
-			Console.SetCursorPosition(171, currentLineCursor);
-			Console.Write("Stand Ls: {0,4:n0}", totalLossesStand);
-			Console.SetCursorPosition(187, currentLineCursor);
-			Console.Write("Stand Ps: {0,4:n0}", totalPushesStand);
-			Console.WriteLine();
+			if (!playGame)
+			{
+				double odds = ((double)totalHandsTotal / ((double)runTimes * players.Count())) * 100;
+				int currentLineCursor = Console.CursorTop;
+				Console.Write(" Starting Hand: {0,2}", cardValue);
+				Console.SetCursorPosition(20, currentLineCursor);
+				Console.Write("Hands: {0,5:n0}", totalHandsTotal);
+				Console.SetCursorPosition(34, currentLineCursor);
+				Console.Write("Per: {0,6:n2} %", odds);
+				Console.SetCursorPosition(49, currentLineCursor);
+				Console.Write("W/L: {0,11:c0}", totalBetTotal);
+				Console.SetCursorPosition(67, currentLineCursor);
+				Console.Write("Ws: {0,4:n0}", totalWins);
+				Console.SetCursorPosition(77, currentLineCursor);
+				Console.Write("Ls: {0,4:n0}", totalLosses);
+				Console.SetCursorPosition(87, currentLineCursor);
+				Console.Write("Ps: {0,4:n0}", totalPushes);
+				Console.SetCursorPosition(97, currentLineCursor);
+				Console.Write("Hit Ws: {0,4:n0}", totalWinsHit);
+				Console.SetCursorPosition(111, currentLineCursor);
+				Console.Write("Hit Ls: {0,4:n0}", totalLossesHit);
+				Console.SetCursorPosition(125, currentLineCursor);
+				Console.Write("Hit Ps: {0,4:n0}", totalPushesHit);
+				Console.SetCursorPosition(139, currentLineCursor);
+				Console.Write("Hit Busts: {0,3}", totalHitBusts);
+				Console.SetCursorPosition(155, currentLineCursor);
+				Console.Write("Stand Ws: {0,4:n0}", totalWinsStand);
+				Console.SetCursorPosition(171, currentLineCursor);
+				Console.Write("Stand Ls: {0,4:n0}", totalLossesStand);
+				Console.SetCursorPosition(187, currentLineCursor);
+				Console.Write("Stand Ps: {0,4:n0}", totalPushesStand);
+				Console.WriteLine(); 
+			}
 		}
 
 		private void LoadHandsFile(int cardValue)
@@ -1625,6 +1670,20 @@ namespace BJSimLib
 			int totalLossesStand = 0;
 			int totalPushesStand = 0;
 			int playnum = 1;
+			double betTotal = 0;
+			int handsTotal = 0;
+			int wins = 0;
+			int winsHit = 0;
+			int winsStand = 0;
+			int hitBusts = 0;
+			double hitTotal = 0;
+			int losses = 0;
+			int lossesHit = 0;
+			int lossesStand = 0;
+			double standTotal = 0;
+			int pushs = 0;
+			int pushsHit = 0;
+			int pushsStand = 0;
 			foreach (PlayerModel p in players)
 			{
 				string[] lines = File.ReadAllLines(@"C:\temp\player" + playnum + "hands.csv");
@@ -1641,20 +1700,6 @@ namespace BJSimLib
 						int push = 0;
 						bool hit = false;
 						int busts = 0;
-						double betTotal = 0;
-						int handsTotal = 0;
-						int wins = 0;
-						int winsHit = 0;
-						int winsStand = 0;
-						int hitBusts = 0;
-						double hitTotal = 0;
-						int losses = 0;
-						int lossesHit = 0;
-						int lossesStand = 0;
-						double standTotal = 0;
-						int pushs = 0;
-						int pushsHit = 0;
-						int pushsStand = 0;
 						bet = double.Parse(cols[1]);
 						win = int.Parse(cols[8]);
 						loss = int.Parse(cols[9]);
@@ -1665,9 +1710,11 @@ namespace BJSimLib
 						{
 							hit = true;
 							hitTotal += bet;
+							
 							if (busts == 1)
 							{
 								hitBusts++;
+								totalHitBusts++;
 							}
 						}
 						else
@@ -1675,90 +1722,92 @@ namespace BJSimLib
 							standTotal += bet;
 						}
 						handsTotal++;
+						totalHandsTotal++;
 						betTotal += bet;
+						totalBetTotal += bet;
 						if (win == 1)
 						{
 							wins++;
+							totalWins++;
 							if (hit)
 							{
 								winsHit++;
+								totalWinsHit++;
 							}
 							else
 							{
 								winsStand++;
+								totalWinsStand++;
 							}
 						}
 						else if (loss == 1)
 						{
 							losses++;
+							totalLosses++;
 							if (hit)
 							{
 								lossesHit++;
+								totalLossesHit++;
 							}
 							else
 							{
 								lossesStand++;
+								totalLossesStand++;
 							}
 						}
 						else
 						{
 							pushs++;
+							totalPushes++;
 							if (hit)
 							{
 								pushsHit++;
+								totalPushesHit++;
 							}
 							else
 							{
 								pushsStand++;
+								totalPushesStand++;
 							}
 						}
-						p.startingHandTotals.Add($"{cardValue},{handsTotal},{betTotal},{wins},{losses},{pushs},{winsHit},{lossesHit},{pushsHit},{hitBusts},{winsStand},{lossesStand},{pushsStand}");
-						totalHandsTotal += handsTotal;
-						totalBetTotal += betTotal;
-						totalWins += wins;
-						totalLosses += losses;
-						totalPushes += pushs;
-						totalWinsHit += winsHit;
-						totalLossesHit += lossesHit;
-						totalPushesHit += pushsHit;
-						totalHitBusts += hitBusts;
-						totalWinsStand += winsStand;
-						totalLossesStand += lossesStand;
-						totalPushesStand += pushsStand;
 					}
 				}
+				p.startingHandTotals.Add($"{cardValue},{handsTotal},{betTotal},{wins},{losses},{pushs},{winsHit},{lossesHit},{pushsHit},{hitBusts},{winsStand},{lossesStand},{pushsStand}");
 				playnum++;
 			}
-			double odds = ((double)totalHandsTotal / ((double)runTimes*players.Count())) * 100;
-			int currentLineCursor = Console.CursorTop;
-			Console.Write(" Starting Hand: {0,2}", cardValue);
-			Console.SetCursorPosition(20, currentLineCursor);
-			Console.Write("Hands: {0,5:n0}", totalHandsTotal);
-			Console.SetCursorPosition(34, currentLineCursor);
-			Console.Write("Per: {0,6:n2} %", odds);
-			Console.SetCursorPosition(49, currentLineCursor);
-			Console.Write("W/L: {0,11:c0}", totalBetTotal);
-			Console.SetCursorPosition(67, currentLineCursor);
-			Console.Write("Ws: {0,4:n0}", totalWins);
-			Console.SetCursorPosition(77, currentLineCursor);
-			Console.Write("Ls: {0,4:n0}", totalLosses);
-			Console.SetCursorPosition(87, currentLineCursor);
-			Console.Write("Ps: {0,4:n0}", totalPushes);
-			Console.SetCursorPosition(97, currentLineCursor);
-			Console.Write("Hit Ws: {0,4:n0}", totalWinsHit);
-			Console.SetCursorPosition(111, currentLineCursor);
-			Console.Write("Hit Ls: {0,4:n0}", totalLossesHit);
-			Console.SetCursorPosition(125, currentLineCursor);
-			Console.Write("Hit Ps: {0,4:n0}", totalPushesHit);
-			Console.SetCursorPosition(139, currentLineCursor);
-			Console.Write("Hit Busts: {0,3}", totalHitBusts);
-			Console.SetCursorPosition(155, currentLineCursor);
-			Console.Write("Stand Ws: {0,4:n0}", totalWinsStand);
-			Console.SetCursorPosition(171, currentLineCursor);
-			Console.Write("Stand Ls: {0,4:n0}", totalLossesStand);
-			Console.SetCursorPosition(187, currentLineCursor);
-			Console.Write("Stand Ps: {0,4:n0}", totalPushesStand);
-			Console.WriteLine();
+			if (!playGame)
+			{
+				double odds = ((double)totalHandsTotal / ((double)runTimes * players.Count())) * 100;
+				int currentLineCursor = Console.CursorTop;
+				Console.Write(" Starting Hand: {0,2}", cardValue);
+				Console.SetCursorPosition(20, currentLineCursor);
+				Console.Write("Hands: {0,5:n0}", totalHandsTotal);
+				Console.SetCursorPosition(34, currentLineCursor);
+				Console.Write("Per: {0,6:n2} %", odds);
+				Console.SetCursorPosition(49, currentLineCursor);
+				Console.Write("W/L: {0,11:c0}", totalBetTotal);
+				Console.SetCursorPosition(67, currentLineCursor);
+				Console.Write("Ws: {0,4:n0}", totalWins);
+				Console.SetCursorPosition(77, currentLineCursor);
+				Console.Write("Ls: {0,4:n0}", totalLosses);
+				Console.SetCursorPosition(87, currentLineCursor);
+				Console.Write("Ps: {0,4:n0}", totalPushes);
+				Console.SetCursorPosition(97, currentLineCursor);
+				Console.Write("Hit Ws: {0,4:n0}", totalWinsHit);
+				Console.SetCursorPosition(111, currentLineCursor);
+				Console.Write("Hit Ls: {0,4:n0}", totalLossesHit);
+				Console.SetCursorPosition(125, currentLineCursor);
+				Console.Write("Hit Ps: {0,4:n0}", totalPushesHit);
+				Console.SetCursorPosition(139, currentLineCursor);
+				Console.Write("Hit Busts: {0,3}", totalHitBusts);
+				Console.SetCursorPosition(155, currentLineCursor);
+				Console.Write("Stand Ws: {0,4:n0}", totalWinsStand);
+				Console.SetCursorPosition(171, currentLineCursor);
+				Console.Write("Stand Ls: {0,4:n0}", totalLossesStand);
+				Console.SetCursorPosition(187, currentLineCursor);
+				Console.Write("Stand Ps: {0,4:n0}", totalPushesStand);
+				Console.WriteLine(); 
+			}
 		}
 
 		private int GetCardValue(string card)
