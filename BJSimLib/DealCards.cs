@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Diagnostics;
 
 namespace BJSimLib
 {
@@ -100,13 +101,13 @@ namespace BJSimLib
 			Console.BackgroundColor = ConsoleColor.Black;
 			Console.ForegroundColor = ConsoleColor.White;
 			Console.WriteLine("*********************************************");
-			Console.WriteLine("***** Welcome to My Blackjack Model App *****");
+			Console.WriteLine("******** Welcome to My Blackjack App ********");
 			Console.WriteLine("*****            Greg Sanders           *****");
 			Console.WriteLine("*********************************************");
 			Console.BackgroundColor = ConsoleColor.White;
 			Console.ForegroundColor = ConsoleColor.Black;
 			Console.WriteLine();
-			Console.WriteLine("Model to determine best actions after initial deal!");
+			Console.WriteLine("Play Blackjack and make your money grow!!  Good Luck!!");
 			Console.WriteLine();
 			Console.Write("What is your name?  ");
 			gamePlayer1.name = Console.ReadLine();
@@ -327,7 +328,6 @@ namespace BJSimLib
 			}
 			DisplayStats();
 			WriteToFile();
-			Console.ReadLine();
 		}
 
 		private static void ClearCurrentConsoleLine()
@@ -422,7 +422,7 @@ namespace BJSimLib
 					}
 				}
 
-				else if ((playerMove.KeyChar == 'D' || playerMove.KeyChar == 'd') && ((p.firstOption && !p.secondHand) || (p.first2Option && p.secondHand)) && (p.total == 9 || p.total == 10 || p.total == 11))
+				else if ((playerMove.KeyChar == 'D' || playerMove.KeyChar == 'd') && ((p.firstOption && !p.secondHand) || (p.first2Option && p.secondHand)) && ((p.total == 9 || p.total == 10 || p.total == 11) || (p.total2 == 9 || p.total2 == 10 || p.total2 == 11)))
 				{
 					p.totalDoubleDownAccepted++;
 					p.handDoubleDownAccepted = 1;
@@ -547,6 +547,13 @@ namespace BJSimLib
 			p.cardNumber = 1;
 			dealer.cardNumber = 1;
 			HandTotal(p);  // Display the player hand total and dealer 'unknown' label
+			if (playGame && p.total == 21 && dealer.total != 21)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					Console.Beep();
+				}
+			}
 		}
 
 		private void ShowDealerCard()
@@ -1409,7 +1416,12 @@ namespace BJSimLib
 		{
 			int playnum = 1;
 			double totalResult = 0;
-			foreach (PlayerModel p in players)
+			string pathString = @"c:\temp";
+			if (!File.Exists(pathString))
+			{
+				Directory.CreateDirectory(pathString);
+			}
+				foreach (PlayerModel p in players)
 			{
 				string path = @"c:\temp\player" + playnum + "hands.csv";
 				string path2 = @"c:\temp\player" + playnum + "hands.txt";
@@ -1448,7 +1460,7 @@ namespace BJSimLib
 			if (!playGame)
 			{
 				Console.SetCursorPosition(20, 42);
-				Console.WriteLine("Press a key to continue");
+				Console.WriteLine("Press Enter to continue");
 				Console.ReadLine();
 				Console.Clear();
 				Console.SetCursorPosition(0, 2); 
@@ -1490,6 +1502,18 @@ namespace BJSimLib
 				string path4 = @"c:\temp\player" + playnum + "startingHandResults.csv";
 				File.WriteAllLines(path4, p.startingHandTotals);
 				playnum++;
+			}
+			if (!playGame)
+			{
+				Console.ForegroundColor = ConsoleColor.Red;
+				Console.WriteLine("Press D to open game statistics directory, or any other key to close.");
+				Console.ForegroundColor = ConsoleColor.DarkBlue;
+				ConsoleKeyInfo select = new ConsoleKeyInfo();
+				select = Console.ReadKey(true);
+				if (select.KeyChar == 'd' || select.KeyChar == 'D')
+				{
+					Process.Start(@"c:\\temp");
+				} 
 			}
 		}
 
@@ -2714,10 +2738,6 @@ namespace BJSimLib
 						y = playerMessagePosition;
 						DisplayMessage("BLACKJACK!!  Player WINS!!", "DarkGreen");
 						UpdateHandBet(playerBetPosition, playerCardPosition - 1, p.betResult - p.bet, "DarkGreen");  // Display player bet results
-						for (int i = 0; i < 3; i++)
-						{
-							Console.Beep();
-						}
 					}
 					p.totalNaturalBJ++;
 					p.handNaturalBJ = 1;
